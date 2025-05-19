@@ -1,0 +1,17 @@
+{
+    "username": "徐鹤",
+    "password": "123456",
+    "learning_goal": "cet4",
+    "starred_words": [],
+    "learning_history": [
+        {
+            "date": "2025-05-19",
+            "words": 1
+        }
+    ],
+    "settings": {
+        "font_size": 12,
+        "theme_color": "#4a7abc",
+        "dark_mode": false
+    }
+}
