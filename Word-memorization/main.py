@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox, simpledialog
 import json
 import os
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class VocabularyApp:
@@ -31,24 +31,34 @@ class VocabularyApp:
         }
 
         # 单词库（示例数据）
-        self.word_banks = {
-            "high_school": [
-                {"word": "abandon", "meaning": "放弃，抛弃", "example": "She had to abandon her dream."},
-                {"word": "absorb", "meaning": "吸收，理解", "example": "Plants absorb sunlight."},
-                # 更多单词...
-            ],
-            "cet4": [
-                {"word": "adequate", "meaning": "足够的，适当的", "example": "We have adequate resources."},
-                {"word": "ambiguous", "meaning": "模棱两可的", "example": "His answer was ambiguous."},
-                # 更多单词...
-            ],
-            "cet6": [
-                {"word": "aberration", "meaning": "偏差，脱离常轨", "example": "This behavior is an aberration."},
-                {"word": "abjure", "meaning": "发誓放弃，宣誓弃绝", "example": "He abjured his old beliefs."},
-                # 更多单词...
-            ]
-        }
-
+        try:
+            with open('word_banks.json', 'r', encoding='utf-8') as file:
+                self.word_banks = json.load(file)
+        except:
+            # 如果文件不存在或出错，使用备用数据
+            self.word_banks = {
+                "high_school": [
+                    {"word": "abandon", "meaning": "放弃，抛弃", "example": "She had to abandon her dream."},
+                    {"word": "absorb", "meaning": "吸收，理解", "example": "Plants absorb sunlight."},
+                    {"word": "academic", "meaning": "学术的，学院的", "example": "She has excellent academic records."},
+                    {"word": "accumulate", "meaning": "积累，积聚", "example": "He accumulated a fortune."},
+                    {"word": "adapt", "meaning": "适应，改编", "example": "We must adapt to new conditions."}
+                ],
+                "cet4": [
+                    {"word": "adequate", "meaning": "足够的，适当的", "example": "We have adequate resources."},
+                    {"word": "ambiguous", "meaning": "模棱两可的", "example": "His answer was ambiguous."},
+                    {"word": "annual", "meaning": "每年的，年度的", "example": "The annual meeting is in December."},
+                    {"word": "anticipate", "meaning": "预期，期望", "example": "We anticipate good results."},
+                    {"word": "appeal", "meaning": "呼吁，上诉", "example": "The charity appeal raised millions."}
+                ],
+                "cet6": [
+                    {"word": "aberration", "meaning": "偏差，脱离常轨", "example": "This behavior is an aberration."},
+                    {"word": "abjure", "meaning": "发誓放弃，宣誓弃绝", "example": "He abjured his old beliefs."},
+                    {"word": "abdicate", "meaning": "退位，放弃", "example": "The king abdicated the throne."},
+                    {"word": "aberrant", "meaning": "异常的，脱离常轨的", "example": "His aberrant behavior surprised everyone."},
+                    {"word": "abide", "meaning": "遵守，忍受", "example": "Abide by the rules."}
+                ]
+            }
         # 当前单词列表
         self.current_words = []
 
@@ -70,7 +80,7 @@ class VocabularyApp:
 
         # 标题
         tk.Label(login_frame, text="背单词软件", font=(self.font_family, 24, "bold")).grid(row=0, column=0,
-                                                                                           columnspan=2, pady=20)
+                                                                                       columnspan=2, pady=20)
 
         # 用户名
         tk.Label(login_frame, text="用户名:", font=(self.font_family, 12)).grid(row=1, column=0, sticky="w", pady=10)
@@ -84,12 +94,12 @@ class VocabularyApp:
 
         # 登录按钮
         login_btn = tk.Button(login_frame, text="登录", font=(self.font_family, 12),
-                              command=self.login, width=10)
+                             command=self.login, width=10)
         login_btn.grid(row=3, column=0, pady=20, padx=5)
 
         # 注册按钮
         register_btn = tk.Button(login_frame, text="注册", font=(self.font_family, 12),
-                                 command=self.show_register, width=10)
+                                command=self.show_register, width=10)
         register_btn.grid(row=3, column=1, pady=20, padx=5)
 
     def show_register(self):
@@ -103,7 +113,7 @@ class VocabularyApp:
 
         # 标题
         tk.Label(register_frame, text="新用户注册", font=(self.font_family, 24, "bold")).grid(row=0, column=0,
-                                                                                              columnspan=2, pady=20)
+                                                                                        columnspan=2, pady=20)
 
         # 用户名
         tk.Label(register_frame, text="用户名:", font=(self.font_family, 12)).grid(row=1, column=0, sticky="w", pady=10)
@@ -116,14 +126,12 @@ class VocabularyApp:
         self.register_password.grid(row=2, column=1, pady=10)
 
         # 确认密码
-        tk.Label(register_frame, text="确认密码:", font=(self.font_family, 12)).grid(row=3, column=0, sticky="w",
-                                                                                     pady=10)
+        tk.Label(register_frame, text="确认密码:", font=(self.font_family, 12)).grid(row=3, column=0, sticky="w", pady=10)
         self.register_confirm_password = tk.Entry(register_frame, font=(self.font_family, 12), width=20, show="*")
         self.register_confirm_password.grid(row=3, column=1, pady=10)
 
         # 学习目标
-        tk.Label(register_frame, text="学习目标:", font=(self.font_family, 12)).grid(row=4, column=0, sticky="w",
-                                                                                     pady=10)
+        tk.Label(register_frame, text="学习目标:", font=(self.font_family, 12)).grid(row=4, column=0, sticky="w", pady=10)
         self.learning_goal = tk.StringVar(value="high_school")
         goal_frame = tk.Frame(register_frame)
         goal_frame.grid(row=4, column=1, pady=10, sticky="w")
@@ -131,7 +139,7 @@ class VocabularyApp:
         goals = [("高中", "high_school"), ("四级", "cet4"), ("六级", "cet6")]
         for i, (text, value) in enumerate(goals):
             tk.Radiobutton(goal_frame, text=text, variable=self.learning_goal, value=value,
-                           font=(self.font_family, 12)).grid(row=0, column=i, padx=5)
+                          font=(self.font_family, 12)).grid(row=0, column=i, padx=5)
 
         # 注册按钮
         tk.Button(register_frame, text="注册", font=(self.font_family, 12),
@@ -206,6 +214,57 @@ class VocabularyApp:
         goal = self.user_data["learning_goal"]
         if goal in self.word_banks:
             self.current_words = self.word_banks[goal]
+        else:
+            # 如果目标词库不存在，默认加载高中词库
+            self.current_words = self.word_banks.get("high_school", [])
+            self.user_data["learning_goal"] = "high_school"
+
+            # 保存用户数据
+            try:
+                user_file = f"{self.user_data['username']}.json"
+                with open(user_file, "w", encoding="utf-8") as f:
+                    json.dump(self.user_data, f, ensure_ascii=False, indent=4)
+            except Exception as e:
+                messagebox.showerror("错误", f"加载词库失败: {str(e)}")
+
+    def calculate_weekly_stats(self):
+        """计算本周的学习统计数据"""
+        # 获取当前日期和一周前的日期
+        today = datetime.now()
+        week_ago = today - timedelta(days=7)
+
+        # 初始化统计变量
+        learning_days = 0
+        new_words = 0
+        review_words = 0
+        correct_answers = 0
+        total_questions = 0
+
+        # 遍历学习历史记录
+        for entry in self.user_data.get("learning_history", []):
+            try:
+                entry_date = datetime.strptime(entry["date"], "%Y-%m-%d")
+                if week_ago <= entry_date <= today:
+                    learning_days += 1
+                    new_words += entry.get("new_words", 0)
+                    review_words += entry.get("review_words", 0)
+                    correct_answers += entry.get("correct_answers", 0)
+                    total_questions += entry.get("total_questions", 0)
+            except:
+                continue
+
+        # 计算平均正确率
+        avg_accuracy = "0%"
+        if total_questions > 0:
+            accuracy = (correct_answers / total_questions) * 100
+            avg_accuracy = f"{accuracy:.0f}%"
+
+        return {
+            "学习天数": learning_days,
+            "新学单词": new_words,
+            "复习单词": review_words,
+            "平均正确率": avg_accuracy
+        }
 
     def show_main_menu(self):
         # 清空主框架
@@ -254,13 +313,8 @@ class VocabularyApp:
         # 本周学习统计
         tk.Label(stats_frame, text="本周学习:", font=(self.font_family, 12, "bold")).pack(anchor="w", pady=10)
 
-        # 模拟学习数据
-        weekly_data = {
-            "学习天数": 5,
-            "新学单词": 30,
-            "复习单词": 50,
-            "平均正确率": "85%"
-        }
+        # 计算本周学习数据
+        weekly_data = self.calculate_weekly_stats()
 
         for key, value in weekly_data.items():
             tk.Label(stats_frame, text=f"{key}: {value}", font=(self.font_family, 12)).pack(anchor="w", pady=3)
@@ -281,6 +335,10 @@ class VocabularyApp:
         tk.Button(functions_frame, text="学习记录", font=(self.font_family, 16),
                   command=self.show_learning_history, height=2, width=20).pack(pady=20)
 
+        # 新增：切换词库按钮
+        tk.Button(functions_frame, text="切换词库", font=(self.font_family, 16),
+                  command=self.show_switch_bank, height=2, width=20).pack(pady=20)
+
         # 底部按钮 - 退出程序
         tk.Button(self.main_frame, text="退出程序", font=(self.font_family, 14),
                   command=self.exit_program, bg="#e74c3c", fg="white").pack(side=tk.BOTTOM, pady=20)
@@ -289,17 +347,28 @@ class VocabularyApp:
         # 创建设置对话框
         settings_window = tk.Toplevel(self.root)
         settings_window.title("设置")
-        settings_window.geometry("400x300")
+        settings_window.geometry("400x350")
         settings_window.resizable(False, False)
 
         # 设置标题
         tk.Label(settings_window, text="软件设置", font=(self.font_family, 18, "bold")).pack(pady=20)
 
+        # 学习目标
+        tk.Label(settings_window, text="学习目标:", font=(self.font_family, 12)).pack(anchor="w", padx=30, pady=5)
+        learning_goal = tk.StringVar(value=self.user_data["learning_goal"])
+        goal_frame = tk.Frame(settings_window)
+        goal_frame.pack(pady=5)
+
+        goals = [("高中", "high_school"), ("四级", "cet4"), ("六级", "cet6")]
+        for i, (text, value) in enumerate(goals):
+            tk.Radiobutton(goal_frame, text=text, variable=learning_goal, value=value,
+                          font=(self.font_family, 12)).grid(row=0, column=i, padx=10)
+
         # 字体大小
         tk.Label(settings_window, text="字体大小:", font=(self.font_family, 12)).pack(anchor="w", padx=30, pady=5)
         font_size = tk.IntVar(value=self.user_data["settings"]["font_size"])
         font_size_scale = tk.Scale(settings_window, from_=10, to=20, orient=tk.HORIZONTAL,
-                                   variable=font_size, length=300)
+                                  variable=font_size, length=300)
         font_size_scale.pack(pady=5)
 
         # 主题颜色
@@ -312,7 +381,7 @@ class VocabularyApp:
         colors = ["#4a7abc", "#2ecc71", "#e74c3c", "#f39c12", "#9b59b6"]
         for color in colors:
             tk.Radiobutton(color_frame, variable=theme_color, value=color,
-                           bg=color, width=3, height=1).pack(side=tk.LEFT, padx=5)
+                          bg=color, width=3, height=1).pack(side=tk.LEFT, padx=5)
 
         # 深色模式
         tk.Label(settings_window, text="深色模式:", font=(self.font_family, 12)).pack(anchor="w", padx=30, pady=5)
@@ -321,9 +390,15 @@ class VocabularyApp:
 
         # 保存设置按钮
         def save_settings():
+            # 更新学习目标
+            self.user_data["learning_goal"] = learning_goal.get()
+            # 更新其他设置
             self.user_data["settings"]["font_size"] = font_size.get()
             self.user_data["settings"]["theme_color"] = theme_color.get()
             self.user_data["settings"]["dark_mode"] = dark_mode.get()
+
+            # 重新加载单词库
+            self.load_word_bank()
 
             # 保存用户数据
             try:
@@ -340,6 +415,82 @@ class VocabularyApp:
         tk.Button(settings_window, text="保存设置", font=(self.font_family, 12),
                   command=save_settings).pack(pady=20)
 
+    def show_switch_bank(self):
+        # 清空主框架
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
+
+        # 创建顶部导航栏
+        top_bar = tk.Frame(self.main_frame, bg=self.user_data["settings"]["theme_color"], height=40)
+        top_bar.pack(fill=tk.X)
+
+        # 返回按钮
+        tk.Button(top_bar, text="返回", font=(self.font_family, 10),
+                  command=self.show_main_menu, bg=self.user_data["settings"]["theme_color"],
+                  fg="white", bd=0).pack(side=tk.LEFT, padx=10, pady=10)
+
+        # 创建词库选择区域
+        bank_frame = tk.Frame(self.main_frame, padx=20, pady=20)
+        bank_frame.pack(fill=tk.BOTH, expand=True)
+
+        # 标题
+        tk.Label(bank_frame, text="选择词库", font=(self.font_family, 24, "bold")).pack(pady=40)
+
+        # 当前词库显示
+        current_goal = self.user_data["learning_goal"]
+        current_text = "高中" if current_goal == "high_school" else \
+                      "四级" if current_goal == "cet4" else "六级"
+        tk.Label(bank_frame, text=f"当前词库: {current_text}", font=(self.font_family, 14)).pack(pady=20)
+
+        # 词库选择
+        goal_var = tk.StringVar(value=current_goal)
+
+        # 高中词库
+        high_school_frame = tk.Frame(bank_frame)
+        high_school_frame.pack(fill=tk.X, pady=10)
+        tk.Radiobutton(high_school_frame, text="高中词库", variable=goal_var, value="high_school",
+                      font=(self.font_family, 14)).pack(side=tk.LEFT)
+        tk.Label(high_school_frame, text=f"共 {len(self.word_banks.get('high_school', []))} 个单词",
+                font=(self.font_family, 12)).pack(side=tk.LEFT, padx=20)
+
+        # 四级词库
+        cet4_frame = tk.Frame(bank_frame)
+        cet4_frame.pack(fill=tk.X, pady=10)
+        tk.Radiobutton(cet4_frame, text="四级词库", variable=goal_var, value="cet4",
+                      font=(self.font_family, 14)).pack(side=tk.LEFT)
+        tk.Label(cet4_frame, text=f"共 {len(self.word_banks.get('cet4', []))} 个单词",
+                font=(self.font_family, 12)).pack(side=tk.LEFT, padx=20)
+
+        # 六级词库
+        cet6_frame = tk.Frame(bank_frame)
+        cet6_frame.pack(fill=tk.X, pady=10)
+        tk.Radiobutton(cet6_frame, text="六级词库", variable=goal_var, value="cet6",
+                      font=(self.font_family, 14)).pack(side=tk.LEFT)
+        tk.Label(cet6_frame, text=f"共 {len(self.word_banks.get('cet6', []))} 个单词",
+                font=(self.font_family, 12)).pack(side=tk.LEFT, padx=20)
+
+        # 确认按钮
+        def confirm_switch():
+            new_goal = goal_var.get()
+            if new_goal != current_goal:
+                self.user_data["learning_goal"] = new_goal
+                self.load_word_bank()  # 重新加载词库
+
+                # 保存用户数据
+                try:
+                    user_file = f"{self.user_data['username']}.json"
+                    with open(user_file, "w", encoding="utf-8") as f:
+                        json.dump(self.user_data, f, ensure_ascii=False, indent=4)
+
+                    messagebox.showinfo("成功", f"已切换到 {current_text} 词库")
+                except Exception as e:
+                    messagebox.showerror("错误", f"切换词库失败: {str(e)}")
+
+            self.show_main_menu()  # 返回主菜单
+
+        tk.Button(bank_frame, text="确认切换", font=(self.font_family, 16),
+                  command=confirm_switch, height=2, width=15).pack(pady=40)
+
     def start_learning(self):
         # 清空主框架
         for widget in self.main_frame.winfo_children():
@@ -354,17 +505,26 @@ class VocabularyApp:
                   command=self.show_main_menu, bg=self.user_data["settings"]["theme_color"],
                   fg="white", bd=0).pack(side=tk.LEFT, padx=10, pady=10)
 
-        # 当前学习进度
+        # 当前学习进度（简化为示例，实际可增加进度计数）
         tk.Label(top_bar, text="学习进度: 1/20", font=(self.font_family, 12),
                  bg=self.user_data["settings"]["theme_color"], fg="white").pack(side=tk.RIGHT, padx=10, pady=10)
 
+        # 获取完整词库
+        all_words = self.word_banks.get(self.user_data["learning_goal"], [])
+
+        # 为每个单词设置权重（星标单词权重3，普通单词权重1）
+        weighted_words = []
+        for word_dict in all_words:
+            weight = 3 if word_dict["word"] in self.user_data["starred_words"] else 1
+            weighted_words.extend([word_dict] * weight)
+
         # 随机选择一个单词
-        if not self.current_words:
+        if not weighted_words:
             messagebox.showinfo("提示", "没有可用的单词")
             self.show_main_menu()
             return
 
-        current_word = random.choice(self.current_words)
+        current_word = random.choice(weighted_words)
 
         # 创建单词学习区域
         word_frame = tk.Frame(self.main_frame, padx=20, pady=20)
@@ -385,12 +545,12 @@ class VocabularyApp:
             star_btn.pack(pady=10)
 
         show_meaning_btn = tk.Button(word_frame, text="显示词义", font=(self.font_family, 16),
-                                     command=show_meaning)
+                                    command=show_meaning)
         show_meaning_btn.pack(pady=20)
 
         # 例句
         tk.Label(word_frame, text=f"例句: {current_word['example']}", font=(self.font_family, 14),
-                 wraplength=500).pack(pady=20)
+                wraplength=500).pack(pady=20)
 
         # 星标按钮
         is_starred = current_word["word"] in self.user_data["starred_words"]
@@ -399,10 +559,12 @@ class VocabularyApp:
         def toggle_star():
             if star_var.get() == "☆":
                 star_var.set("★")
-                self.user_data["starred_words"].append(current_word["word"])
+                if current_word["word"] not in self.user_data["starred_words"]:
+                    self.user_data["starred_words"].append(current_word["word"])
             else:
                 star_var.set("☆")
-                self.user_data["starred_words"].remove(current_word["word"])
+                if current_word["word"] in self.user_data["starred_words"]:
+                    self.user_data["starred_words"].remove(current_word["word"])
 
             # 保存用户数据
             try:
@@ -413,11 +575,11 @@ class VocabularyApp:
                 messagebox.showerror("错误", f"保存星标失败: {str(e)}")
 
         star_btn = tk.Button(word_frame, textvariable=star_var, font=(self.font_family, 20),
-                             command=toggle_star, fg="orange")
+                            command=toggle_star, fg="orange")
 
         # 下一个单词按钮
         next_word_btn = tk.Button(word_frame, text="下一个", font=(self.font_family, 16),
-                                  command=self.start_learning)
+                                command=self.start_learning)
 
         # 记录学习历史
         def record_learning():
@@ -425,13 +587,18 @@ class VocabularyApp:
             # 查找今天是否已有记录
             for entry in self.user_data["learning_history"]:
                 if entry["date"] == today:
-                    entry["words"] += 1
+                    entry["words"] = entry.get("words", 0) + 1
+                    entry["review_words"] = entry.get("review_words", 0) + 1
                     return
 
             # 如果没有，创建新记录
             self.user_data["learning_history"].append({
                 "date": today,
-                "words": 1
+                "words": 1,
+                "new_words": 1,  # 简化处理，实际可区分新学/复习
+                "review_words": 0,
+                "correct_answers": 1,
+                "total_questions": 1
             })
 
             # 保存用户数据
@@ -443,6 +610,9 @@ class VocabularyApp:
                 messagebox.showerror("错误", f"保存学习记录失败: {str(e)}")
 
         record_learning()
+
+        # 显示按钮（初始只显示"显示词义"）
+        show_meaning_btn.pack(pady=20)
 
     def show_starred_words(self):
         # 清空主框架
@@ -531,10 +701,8 @@ class VocabularyApp:
         summary_frame = tk.Frame(self.main_frame, padx=20, pady=10)
         summary_frame.pack(fill=tk.X)
 
-        tk.Label(summary_frame, text=f"累计学习: {total_days} 天", font=(self.font_family, 14)).pack(side=tk.LEFT,
-                                                                                                     padx=20)
-        tk.Label(summary_frame, text=f"累计学习单词: {total_words} 个", font=(self.font_family, 14)).pack(side=tk.LEFT,
-                                                                                                          padx=20)
+        tk.Label(summary_frame, text=f"累计学习: {total_days} 天", font=(self.font_family, 14)).pack(side=tk.LEFT, padx=20)
+        tk.Label(summary_frame, text=f"累计学习单词: {total_words} 个", font=(self.font_family, 14)).pack(side=tk.LEFT, padx=20)
 
     def logout(self):
         if messagebox.askyesno("确认", "确定要登出吗?"):
