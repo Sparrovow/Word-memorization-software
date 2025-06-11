@@ -237,8 +237,8 @@ class VocabularyApp:
         learning_days = 0
         new_words = 0
         review_words = 0
-        correct_answers = 0
-        total_questions = 0
+        quiz_correct = 0
+        quiz_total = 0
 
         # 遍历学习历史记录
         for entry in self.user_data.get("learning_history", []):
@@ -248,23 +248,124 @@ class VocabularyApp:
                     learning_days += 1
                     new_words += entry.get("new_words", 0)
                     review_words += entry.get("review_words", 0)
-                    correct_answers += entry.get("correct_answers", 0)
-                    total_questions += entry.get("total_questions", 0)
+                    quiz_correct += entry.get("quiz_correct_answers", 0)
+                    quiz_total += entry.get("quiz_total_questions", 0)
             except:
                 continue
 
-        # 计算平均正确率
-        avg_accuracy = "0%"
-        if total_questions > 0:
-            accuracy = (correct_answers / total_questions) * 100
-            avg_accuracy = f"{accuracy:.0f}%"
+        # 计算平均测验正确率
+        avg_quiz_accuracy = "0%"
+        if quiz_total > 0:
+            accuracy = (quiz_correct / quiz_total) * 100
+            avg_quiz_accuracy = f"{accuracy:.0f}%"
 
         return {
             "学习天数": learning_days,
             "新学单词": new_words,
             "复习单词": review_words,
-            "平均正确率": avg_accuracy
+            "测验正确率": avg_quiz_accuracy
         }
+
+    def check_answer(self):
+        user_answer = self.quiz_entry.get().strip()
+        correct_answer = self.current_quiz_word["word"]
+
+        is_correct = user_answer == correct_answer
+        if is_correct:
+            self.quiz_correct += 1
+            messagebox.showinfo("正确", "回答正确！")
+        else:
+            messagebox.showerror("错误", f"回答错误，正确答案是: {correct_answer}")
+
+        self.quiz_progress += 1
+
+        if self.quiz_progress < self.quiz_total:
+            # 清空测验区域，保留顶部导航栏
+            for widget in self.main_frame.winfo_children():
+                if widget != self.main_frame.winfo_children()[0]:  # 跳过顶部导航栏
+                    widget.destroy()
+
+            # 更新顶部导航栏的进度
+            top_bar = self.main_frame.winfo_children()[0]
+            for widget in top_bar.winfo_children():
+                if isinstance(widget, tk.Label) and "测验进度" in widget.cget("text"):
+                    widget.config(text=f"测验进度: {self.quiz_progress}/{self.quiz_total}")
+
+            # 创建新的测验区域，保持一致的布局
+            quiz_frame = tk.Frame(self.main_frame, padx=20, pady=20)
+            quiz_frame.pack(fill=tk.BOTH, expand=True)
+
+            # 显示下一个单词的释义
+            self.current_quiz_word = self.quiz_words[self.quiz_progress]
+            tk.Label(quiz_frame, text=f"释义: {self.current_quiz_word['meaning']}", font=(self.font_family, 24)).pack(
+                pady=40)
+
+            # 用户输入框
+            self.quiz_entry = tk.Entry(quiz_frame, font=(self.font_family, 16), width=20)
+            self.quiz_entry.pack(pady=20)
+
+            # 提交按钮
+            submit_btn = tk.Button(quiz_frame, text="提交", font=(self.font_family, 16),
+                                   command=self.check_answer)
+            submit_btn.pack(pady=20)
+        else:
+            # 测验结束，显示结果
+            accuracy = (self.quiz_correct / self.quiz_total) * 100
+            messagebox.showinfo("测验结束", f"测验结束，你的正确率是: {accuracy:.0f}%")
+
+            # 记录测验历史
+            today = datetime.now().strftime("%Y-%m-%d")
+            for entry in self.user_data["learning_history"]:
+                if entry["date"] == today:
+                    entry["quiz_total_questions"] = entry.get("quiz_total_questions", 0) + self.quiz_total
+                    entry["quiz_correct_answers"] = entry.get("quiz_correct_answers", 0) + self.quiz_correct
+                    break
+            else:
+                self.user_data["learning_history"].append({
+                    "date": today,
+                    "words": 0,
+                    "new_words": 0,
+                    "review_words": 0,
+                    "quiz_correct_answers": self.quiz_correct,
+                    "quiz_total_questions": self.quiz_total
+                })
+
+            # 保存用户数据
+            try:
+                user_file = f"{self.user_data['username']}.json"
+                with open(user_file, "w", encoding="utf-8") as f:
+                    json.dump(self.user_data, f, ensure_ascii=False, indent=4)
+            except Exception as e:
+                messagebox.showerror("错误", f"保存学习记录失败: {str(e)}")
+
+            self.show_main_menu()
+
+    def record_learning(self):
+        today = datetime.now().strftime("%Y-%m-%d")
+        # 查找今天是否已有记录
+        for entry in self.user_data["learning_history"]:
+            if entry["date"] == today:
+                entry["words"] = entry.get("words", 0) + 1
+                entry["review_words"] = entry.get("review_words", 0) + 1
+                return
+
+        # 如果没有，创建新记录（注意这里不包含正确率统计）
+        self.user_data["learning_history"].append({
+            "date": today,
+            "words": 1,
+            "new_words": 1,  # 简化处理，实际可区分新学/复习
+            "review_words": 0,
+            "quiz_correct_answers": 0,  # 初始化测验统计
+            "quiz_total_questions": 0  # 初始化测验统计
+        })
+
+        # 保存用户数据
+        try:
+            user_file = f"{self.user_data['username']}.json"
+            with open(user_file, "w", encoding="utf-8") as f:
+                json.dump(self.user_data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            messagebox.showerror("错误", f"保存学习记录失败: {str(e)}")
 
     def show_main_menu(self):
         # 清空主框架
@@ -338,6 +439,10 @@ class VocabularyApp:
         # 新增：切换词库按钮
         tk.Button(functions_frame, text="切换词库", font=(self.font_family, 16),
                   command=self.show_switch_bank, height=2, width=20).pack(pady=20)
+
+        # 新增：开始测验按钮
+        tk.Button(functions_frame, text="开始测验", font=(self.font_family, 16),
+                  command=self.start_quiz, height=2, width=20).pack(pady=20)
 
         # 底部按钮 - 退出程序
         tk.Button(self.main_frame, text="退出程序", font=(self.font_family, 14),
@@ -505,9 +610,6 @@ class VocabularyApp:
                   command=self.show_main_menu, bg=self.user_data["settings"]["theme_color"],
                   fg="white", bd=0).pack(side=tk.LEFT, padx=10, pady=10)
 
-        # 当前学习进度（简化为示例，实际可增加进度计数）
-        tk.Label(top_bar, text="学习进度: 1/20", font=(self.font_family, 12),
-                 bg=self.user_data["settings"]["theme_color"], fg="white").pack(side=tk.RIGHT, padx=10, pady=10)
 
         # 获取完整词库
         all_words = self.word_banks.get(self.user_data["learning_goal"], [])
@@ -723,6 +825,46 @@ class VocabularyApp:
     def exit_program(self):
         if messagebox.askyesno("确认", "确定要退出程序吗?"):
             self.root.destroy()
+
+    def start_quiz(self):
+        # 清空主框架
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
+
+        # 创建顶部导航栏
+        top_bar = tk.Frame(self.main_frame, bg=self.user_data["settings"]["theme_color"], height=40)
+        top_bar.pack(fill=tk.X)
+
+        # 返回按钮
+        tk.Button(top_bar, text="返回", font=(self.font_family, 10),
+                  command=self.show_main_menu, bg=self.user_data["settings"]["theme_color"],
+                  fg="white", bd=0).pack(side=tk.LEFT, padx=10, pady=10)
+
+        # 当前测验进度
+        self.quiz_progress = 0
+        self.quiz_total = 10  # 测验题目数量
+        self.quiz_correct = 0
+        self.quiz_words = random.sample(self.current_words, min(self.quiz_total, len(self.current_words)))
+
+        tk.Label(top_bar, text=f"测验进度: {self.quiz_progress}/{self.quiz_total}", font=(self.font_family, 12),
+                 bg=self.user_data["settings"]["theme_color"], fg="white").pack(side=tk.RIGHT, padx=10, pady=10)
+
+        # 创建测验区域
+        quiz_frame = tk.Frame(self.main_frame, padx=20, pady=20)
+        quiz_frame.pack(fill=tk.BOTH, expand=True)
+
+        # 显示第一个单词的释义
+        self.current_quiz_word = self.quiz_words[self.quiz_progress]
+        tk.Label(quiz_frame, text=f"释义: {self.current_quiz_word['meaning']}", font=(self.font_family, 24)).pack(pady=40)
+
+        # 用户输入框
+        self.quiz_entry = tk.Entry(quiz_frame, font=(self.font_family, 16), width=20)
+        self.quiz_entry.pack(pady=20)
+
+        # 提交按钮
+        submit_btn = tk.Button(quiz_frame, text="提交", font=(self.font_family, 16),
+                               command=self.check_answer)
+        submit_btn.pack(pady=20)
 
 
 if __name__ == "__main__":
